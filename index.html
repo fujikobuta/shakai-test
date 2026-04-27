@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>社会テストアプリ</title>
+    <!-- Google Fonts: M PLUS Rounded 1c -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <!-- SheetJS (xlsx.js) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-bg: #fffbf0;
+            --accent-color: #ff9800;
+            --text-color: #4a4a4a;
+            --maru-color: #4caf50;
+            --batsu-color: #f44336;
+            --back-color: #9e9e9e;
+            --btn-shadow: 0 4px 0 #e68a00;
+            --maru-shadow: 0 4px 0 #388e3c;
+            --batsu-shadow: 0 4px 0 #d32f2f;
+            --back-shadow: 0 4px 0 #757575;
+        }
+
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin: 10px 0;
+            font-size: 1.5rem;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Screen 1: Upload */
+        #upload-btn-label {
+            background: white;
+            border: 3px dashed var(--accent-color);
+            padding: 40px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 80%;
+            max-width: 400px;
+            font-size: 1.2rem;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Screen 2: Quiz */
+        #progress {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #888;
+        }
+
+        #question-box {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            min-height: 200px;
+            border-radius: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            margin-bottom: 30px;
+            border: 4px solid #f0f0f0;
+            position: relative;
+        }
+
+        #question-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            line-height: 1.4;
+            word-break: normal;
+            overflow-wrap: anywhere;
+        }
+
+        #answer-box {
+            font-size: 3.5rem;
+            color: var(--accent-color);
+            margin-bottom: 30px;
+            font-weight: bold;
+            min-height: 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .big-btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        .big-btn:active {
+            transform: translateY(4px);
+        }
+
+        #check-btn {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: var(--btn-shadow);
+            height: 70px;
+        }
+
+        .judge-btns {
+            display: none;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .judge-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: none;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        #maru-btn {
+            background-color: var(--maru-color);
+            box-shadow: var(--maru-shadow);
+        }
+
+        #batsu-btn {
+            background-color: var(--batsu-color);
+            box-shadow: var(--batsu-shadow);
+        }
+
+        .secondary-btn {
+            margin-top: 30px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.1rem;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        /* Screen 3: Result */
+        #result-area {
+            width: 100%;
+            flex-grow: 1;
+            background: white;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 15px;
+            overflow-y: auto;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            border: 1px solid #ddd;
+            font-size: 1.1rem;
+        }
+
+        .bottom-nav {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #line-btn {
+            background-color: #06c755;
+            color: white;
+            width: 100%;
+            height: 70px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #05a546;
+        }
+
+        /* Modal for Resume */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #resume-yes {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        #resume-no {
+            background: #eee;
+            color: #444;
+        }
+
+        /* Practice mode */
+        #practice-answer-box {
+            font-size: 3rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        #practice-explanation-box {
+            font-size: 1rem;
+            color: #666;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-sizing: border-box;
+            display: none;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        #practice-btn {
+            background-color: #9c27b0;
+            color: white;
+            box-shadow: 0 4px 0 #6a1b7a;
+            height: 70px;
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Screen 1: File Selection -->
+    <div id="screen-upload" class="screen active">
+        <h1>社会テストアプリ</h1>
+        <p>Excelファイルをえらんでね！</p>
+        <p style="font-size: 0.8rem; color: #888;">「予定表」シートを読み込みます</p>
+        <label id="upload-btn-label" for="file-input">
+            📄 ファイルをアップロード
+        </label>
+        <input type="file" id="file-input" accept=".xlsx">
+    </div>
+
+    <!-- Screen 2: Quiz -->
+    <div id="screen-quiz" class="screen">
+        <div id="progress">0 / 0</div>
+        <div id="question-box">
+            <div id="question-text">読み込み中...</div>
+        </div>
+
+        <div id="answer-box"></div>
+
+        <!-- 練習モード用：即時表示の解答と解説 -->
+        <div id="practice-answer-box"></div>
+        <div id="practice-explanation-box"></div>
+
+        <button id="check-btn" class="big-btn">答えあわせ</button>
+        <button id="practice-btn" class="big-btn" style="display:none;">練習しました</button>
+
+        <div class="judge-btns" id="judge-container">
+            <button id="maru-btn" class="judge-btn">○</button>
+            <button id="batsu-btn" class="judge-btn">×</button>
+        </div>
+
+        <button id="back-btn" class="secondary-btn" style="display: none;">◀ ひとつ前にもどる</button>
+    </div>
+
+    <!-- Screen 3: Result -->
+    <div id="screen-result" class="screen">
+        <h1>テストおつかれさま！</h1>
+        <div id="result-area"></div>
+        <div class="bottom-nav">
+            <button id="line-btn">結果をコピーしてLINEで送る</button>
+            <button id="restart-btn" class="secondary-btn" style="width: 100%;">最初からやりなおす</button>
+        </div>
+    </div>
+
+    <!-- Resume Modal -->
+    <div id="resume-modal" class="modal-overlay">
+        <div class="modal">
+            <h3>前回のつづきがあるよ！</h3>
+            <p>とちゅうから はじめる？</p>
+            <div class="modal-btns">
+                <button id="resume-no" class="modal-btn">最初から</button>
+                <button id="resume-yes" class="modal-btn">つづきから</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // QUESTIONS_DATA_START
+        const embeddedQuestions = [{"q": "縄文時代の人々が、魔よけやまじないのために土でつくった人形を何といいますか。", "n": 1, "a": "土偶", "l": "", "practice": true, "p": 1}, {"q": "大規模な集団生活を行っていたことなど、縄文時代の常識をくつがえした青森県の遺跡を答えなさい。", "n": 2, "a": "三内丸山遺跡", "l": "", "practice": false, "p": 1}, {"q": "縄文時代の土器と比べた弥生時代の土器の特徴を答えなさい。", "n": 3, "a": "うすくて堅い", "l": "", "practice": false, "p": 1}, {"q": "弥生時代の人々が、稲穂を刈り取るために使っていた道具を何といいますか。", "n": 4, "a": "石包丁", "l": "", "practice": false, "p": 1}, {"q": "弥生時代の人々が、収穫した稲を保管していた倉庫の名前を答えなさい。", "n": 5, "a": "高床倉庫", "l": "", "practice": false, "p": 1}, {"q": "弥生時代の水田の跡地が発見された、静岡県にある遺跡を答えなさい。", "n": 6, "a": "登呂遺跡", "l": "", "practice": false, "p": 1}, {"q": "周囲を堀でかこんだ環濠集落が発見された、佐賀県にある遺跡を答えなさい。", "n": 7, "a": "吉野ヶ里遺跡", "l": "", "practice": false, "p": 1}, {"q": "近畿地方などで多く発見される、青銅のつりがねのような形をした祭器を何といいますか。", "n": 8, "a": "銅鐸", "l": "", "practice": false, "p": 1}, {"q": "1世紀の半ば頃、中国に使者を送り金印を授けられた国の名前を答えなさい。", "n": 9, "a": "奴国", "l": "", "practice": false, "p": 1}, {"q": "1世紀の中ごろ、中国の皇帝から授かった金印にはどのような文字が記されていましたか。", "n": 10, "a": "漢委奴国王", "l": "", "practice": false, "p": 1}, {"q": "3世紀の半ば頃、中国に使者を送った女王が治めていた国の名前を答えなさい。", "n": 11, "a": "邪馬台国", "l": "", "practice": false, "p": 1}, {"q": "3世紀の半ば頃、『魏志』倭人伝に書かれた女王の名前を答えなさい。", "n": 12, "a": "卑弥呼", "l": "", "practice": false, "p": 1}, {"q": "紀元前1世紀から紀元後7世紀ごろまでの日本は、中国の歴史書の中では何とよばれていましたか。", "n": 13, "a": "倭", "l": "", "practice": false, "p": 1}];
+        // QUESTIONS_DATA_END
+
+        let questions = [];
+        let currentIndex = 0;
+        let results = [];
+
+        const STORAGE_KEY = 'kanji_test_progress';
+
+        const fileInput = document.getElementById('file-input');
+        const screenUpload = document.getElementById('screen-upload');
+        const screenQuiz = document.getElementById('screen-quiz');
+        const screenResult = document.getElementById('screen-result');
+
+        const questionText = document.getElementById('question-text');
+        const answerBox = document.getElementById('answer-box');
+        const checkBtn = document.getElementById('check-btn');
+        const practiceBtn = document.getElementById('practice-btn');
+        const practiceAnswerBox = document.getElementById('practice-answer-box');
+        const practiceExplanationBox = document.getElementById('practice-explanation-box');
+        const backBtn = document.getElementById('back-btn');
+        const judgeContainer = document.getElementById('judge-container');
+        const progressText = document.getElementById('progress');
+        const resultArea = document.getElementById('result-area');
+        const resumeModal = document.getElementById('resume-modal');
+
+        // Initial check for embedded data
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("Check embedded questions...");
+            if (typeof embeddedQuestions !== 'undefined' && embeddedQuestions && Array.isArray(embeddedQuestions) && embeddedQuestions.length > 0) {
+                console.log("Found embedded questions:", embeddedQuestions.length);
+                questions = embeddedQuestions;
+                checkResume();
+            } else {
+                console.log("No embedded questions found.");
+            }
+        });
+
+        function checkResume() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const progress = JSON.parse(saved);
+                    if (progress.total === questions.length && progress.index > 0) {
+                        resumeModal.style.display = 'flex';
+                        document.getElementById('resume-yes').onclick = () => {
+                            currentIndex = progress.index;
+                            results = progress.results;
+                            resumeModal.style.display = 'none';
+                            startQuiz(false);
+                        };
+                        document.getElementById('resume-no').onclick = () => {
+                            clearProgress();
+                            resumeModal.style.display = 'none';
+                            startQuiz(true);
+                        };
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Resume error:", e);
+                    clearProgress ();
+                 }
+            }
+            startQuiz(true);
+        }
+
+         function  saveProgress() {
+            const state = {
+                index: currentIndex,
+                results: results,
+                total: questions.length
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function clearProgress() {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+
+        // RGB Color Priority logic
+        function getColorPriority(cell) {
+            if (!cell || !cell.s || !cell.s.fgColor || !cell.s.fgColor.rgb) return 5;
+            let rgb = cell.s.fgColor.rgb;
+            if (rgb.length > 6) rgb = rgb.slice(-6);
+            if (rgb.length !== 6) return 5;
+            let r = parseInt(rgb.substring(0, 2), 16), g = parseInt(rgb.substring(2, 4), 16), b = parseInt(rgb.substring(4, 6), 16);
+            if (r >= 180 && g < 100 && b < 100) return 1;
+            if (r >= 180 && g >= 180 && b < 100) return 2;
+            if (g >= 150 && r < 150 && b < 150) return 3;
+            if (b >= 150 && r < 150 && (g < 200 || (r < 100 && g > 150 && b > 200))) return 4;
+            return 5;
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, {
+                    type: 'array',
+                    cellStyles: true
+                });
+                const worksheet = workbook.Sheets["予定表"];
+                if (!worksheet) {
+                    alert("「予定表」シートが見つかりませんでした。");
+                    return;
+                }
+                const range = XLSX.utils.decode_range(worksheet['!ref']);
+                let rawData = [];
+                for (let r = range.s.r; r <= range.e.r; r++) {
+                    const cellI = worksheet[XLSX.utils.encode_cell({ r: r, c: 8 })],
+                        cellJ = worksheet[XLSX.utils.encode_cell({ r: r, c: 9 })],
+                        cellK = worksheet[XLSX.utils.encode_cell({ r: r, c: 10 })],
+                        cellL = worksheet[XLSX.utils.encode_cell({ r: r, c: 11 })],
+                        cellQ = worksheet[XLSX.utils.encode_cell({ r: r, c: 16 })];
+                    if (!cellI || !cellK) continue;
+                    const q = cellI.v,
+                        numVal = cellJ ? cellJ.v : 0,
+                        num = isNaN(parseInt(numVal)) ? 0 : parseInt(numVal),
+                        a = cellK.v,
+                        l = cellL ? String(cellL.v).trim() : "",
+                        qVal = cellQ ? cellQ.v : null,
+                        practice = (qVal !== null && String(qVal).trim() === "0");
+                    if (!q || !a || q === "問題文" || a === "解答") continue;
+                    rawData.push({
+                        q: q,
+                        n: num,
+                        a: a,
+                        l: l,
+                        practice: practice,
+                        p: getColorPriority(cellI)
+                    });
+                }
+                questions = rawData.sort((a, b) => (a.p !== b.p) ? a.p - b.p : a.n - b.n);
+                if (questions.length === 0) {
+                    alert("問題が見つかりませんでした。");
+                    return;
+                }
+                startQuiz(true);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function startQuiz(reset = true) {
+            if (reset) {
+                currentIndex = 0;
+                results = [];
+                clearProgress();
+            }
+            screenUpload.classList.remove('active');
+            screenQuiz.classList.add('active');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (!questions || questions.length === 0) return;
+            const q = questions[currentIndex];
+            progressText.innerText = `${currentIndex + 1} / ${questions.length}`;
+            questionText.innerText = q.q;
+            
+            // 文字数に応じてフォントサイズを動的に変更
+            const len = q.q.length;
+            if (len < 15) {
+                questionText.style.fontSize = "2.5rem";
+            } else if (len < 30) {
+                questionText.style.fontSize = "1.8rem";
+            } else if (len < 60) {
+                questionText.style.fontSize = "1.4rem";
+            } else {
+                questionText.style.fontSize = "1.1rem";
+            }
+            
+            answerBox.innerText = "";
+            backBtn.style.display = (currentIndex > 0) ? "block" : "none";
+
+            if (q.practice) {
+                // 練習モード：解答・解説を即表示
+                checkBtn.style.display = "none";
+                judgeContainer.style.display = "none";
+                practiceAnswerBox.style.display = "block";
+                practiceAnswerBox.innerText = q.a;
+                if (q.l) {
+                    practiceExplanationBox.style.display = "block";
+                    practiceExplanationBox.innerText = q.l;
+                } else {
+                    practiceExplanationBox.style.display = "none";
+                }
+                practiceBtn.style.display = "block";
+            } else {
+                // 通常モード
+                checkBtn.style.display = "block";
+                judgeContainer.style.display = "none";
+                practiceAnswerBox.style.display = "none";
+                practiceExplanationBox.style.display = "none";
+                practiceBtn.style.display = "none";
+            }
+        }
+
+        checkBtn.addEventListener('click', () => {
+            answerBox.innerText = questions[currentIndex].a;
+            checkBtn.style.display = "none";
+            judgeContainer.style.display = "flex";
+        });
+
+        practiceBtn.addEventListener('click', () => {
+            recordResult('練習');
+        });
+
+        backBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                results.pop();
+                saveProgress();
+                showQuestion();
+            }
+        });
+
+        document.getElementById('maru-btn').addEventListener('click', () => recordResult('○'));
+        document.getElementById('batsu-btn').addEventListener('click', () => recordResult('×'));
+
+        function recordResult(judge) {
+            results.push({
+                a: questions[currentIndex].a,
+                j: judge
+            });
+            currentIndex++;
+            saveProgress();
+            if (currentIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            clearProgress();
+            screenQuiz.classList.remove('active');
+            screenResult.classList.add('active');
+            let text = "";
+            results.forEach(res => {
+                text += `${res.a} ${res.j}\n`;
+            });
+            resultArea.innerText = text;
+        }
+
+        document.getElementById('line-btn').addEventListener('click', () => {
+            const text = resultArea.innerText;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    openLine(text);
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        });
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                openLine(text);
+            } catch (e) {
+                alert("コピー失敗");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function openLine(text) {
+            window.location.href = `line://msg/text/${encodeURIComponent(text)}`;
+            setTimeout(() => {
+                alert("結果をコピーしました！LINEに貼り付けて送ってください。");
+            }, 500);
+        }
+
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            if (confirm("最初から やりなおす？")) {
+                screenResult.classList.remove('active');
+                startQuiz(true);
+            }
+        });
+    </script>
+</body>
+
+</html>
